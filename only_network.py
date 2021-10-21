@@ -5,63 +5,69 @@
 
 # In[1]:
 
+####################################################################################
+####################################################################################
+# import
 
-# import moduels
 import h5py
 import numpy as np
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 import math
 from PIL import Image
 
 
 import torch
 
-# # settings
-
-# In[2]:
-
-
+from torchvision import models
+import torchvision.transforms as T
+from tqdm import tqdm
+####################################################################################
+####################################################################################
 # access the data
-# this part have to be replaced when the images from the neuronal networks are available
-dset = h5py.File("dataset_test.h5","r")
+dset = h5py.File("dataset_train.h5","r")
 
 #Access to the input data
 RGB = dset["RGB"]
 NIR = dset["NIR"]
-print("Thes shape of the images is:")
+print("The shape of the images is:")
 print(RGB.shape)
 
+
+#input_img = RGB
+
+#add the NIR to the training images and remove the blue channel
+input_img = np.concatenate([RGB[:,:,:,:2],np.expand_dims(NIR[:], axis = -1)], axis = -1)
+biggest_NIR = np.max(NIR[:])
+print("Done NIR")
+
+
+####################################################################################
+####################################################################################
+# settings
 
 # get size and numbers of the dataset
 # number of images
 n_images = RGB.shape[0]
-
 # imagesize x_direction
 sx_image = RGB.shape[1]
 #imageszize y_direction
 sy_image = RGB.shape[2]
 
 
-# In[3]:
-
-
-# set number of images in x and y direction
-
 # number of images in x direction
-nx = 15
+nx = 4
 #number of images in y direction 
-ny = 15
+ny = 4
 
 # size of patch
-# alle sind quadratisch
 s_patch = 256
 
 # numbers of categories in the pretrained network Pascal Voc --> 21
 n_cat = 21
 
-
-# In[4]:
-
+####################################################################################
+####################################################################################
+# create meshgrid
 
 # compute the coordinates of all top left pixels of each patch
 # is for each image the same
@@ -79,34 +85,18 @@ y_coordinates = np.arange(0,y_max,stepsize_y)
 # create grid
 xx , yy = np.meshgrid(x_coordinates,y_coordinates)
 
-
-# # Network part
-
-# In[5]:
-
-
-# import networks modules
-from torchvision import models
-import torchvision.transforms as T
-
-
-# In[11]:
-
+####################################################################################
+####################################################################################
+# Network part
 
 # select model
 # available more models are avialable at: https://pytorch.org/vision/stable/models.html
-# check if mdoel.eval() is needed
-# check how to add the pretrained weights from the BigEarthNet
-
-
 #FCN ResNet50
 model = models.segmentation.fcn_resnet50(pretrained=True, progress=True)
 
 #FCN ResNet101
 #model = models.segmentation.fcn_resnet101(pretrained=False, progress=True)
 
-
-# In[7]:
 
 
 # function to prepare the input image into the correct form (for all segementation models of torchvision the same normalistation and standard deviation can be used!)
@@ -119,59 +109,44 @@ trf = T.Compose([T.Resize(s_patch),
                              std = [0.229, 0.224, 0.225])])
 
 
-# In[15]:
 
 
-# run over each image patch and store it
+# run over each image patch and store it on the computer
 
 # zero_vector = np.zeros([1,21])
-zero_vector = np.zeros([3,1])
+zero_vector = np.zeros([3])
 
-# laeuft im Moment noch ueber das test datenset
-for img_n in range(3):
+# ist im Moment noch das Testdatenset
+for img_n in tqdm(range(n_images)):
     for i in range(len(yy)):
         for j in range(len(xx)):
-            temp_img = Image.fromarray(RGB[img_n,xx[i][j]:xx[i][j]+s_patch, yy[i][j]:yy[i][j]+s_patch,:3])
-            inp = trf(temp_img).unsqueeze(0) #check what unsqueeze does
+            #temp_img = Image.fromarray(RGB[img_n,xx[i][j]:xx[i][j]+s_patch, yy[i][j]:yy[i][j]+s_patch,:3])
+            
+            temp_img = input_img[img_n,xx[i][j]:xx[i][j]+s_patch, yy[i][j]:yy[i][j]+s_patch,:3]
+            
+            norm_NIR = temp_img[:,:,2]/biggest_NIR*255 #normalize NIR values to grey values
+            
+            temp_img[:,:,2] = norm_NIR
+            
+            
+            temp_img2 = Image.fromarray((temp_img).astype(np.uint8))
+            
+            inp = trf(temp_img2).unsqueeze(0) #check what unsqueeze does
             out = model(inp)['out']
 
-            # reshape the output of the network to use it in the classifier 
-            # size (image_size x image_size) x 21 (all of the torchvision segmentation models are trained with the Pascal Voc dataseet --> contains 21 categories) more info: https://pytorch.org/vision/stable/models.html
 
-
-###############################################################################
-###############################################################################
-
-            # TODO check if the reshape is done in the correct way
-            # temp = out.detach().numpy()
-            # temp1 = temp[0]
-            # temp2 = temp1.reshape(np.square(s_patch),n_cat)
-
-            # zero_vector[0][0] = xx[i][j]
-            # zero_vector[0][1] = yy[i][j]
-            # zero_vector[0][2] = img_n
-
-            # temp3 = np.append(temp2,zero_vector,axis =0)
-
-###############################################################################
-###############################################################################
-
-
-###############################################################################
-###############################################################################            
-            temp = torch.argmax(out.squeeze(), dim=0).detach().cpu().numpy()
-            temp1 = temp.reshape(np.square(s_patch),1)
+            temp1 = np.amax(out.squeeze().detach().numpy().reshape([np.square(256),21]),1)
             
-            zero_vector[0][0] = xx[i][j]
-            zero_vector[1][0] = yy[i][j]
-            zero_vector[2][0] = img_n
+            
+            zero_vector[0] = xx[i][j]
+            zero_vector[1] = yy[i][j]
+            zero_vector[2] = img_n
             
             temp3 = np.append(temp1, zero_vector, axis = 0)
-###############################################################################
-###############################################################################
+
             
             # save array
-            np.save('./output_test_one_channel_resnet_50_test_data/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
+            np.save('./output_test/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
 
 
 
