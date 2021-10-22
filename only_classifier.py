@@ -100,6 +100,11 @@ X_train_n, X_val_n, y_train_n, y_val_n = train_test_split(np.arange(num_files),n
 s_patch = 256 # TODO integrate this information into the metadata line
 n_cat = 1# TODO integrate this information into the metadata line
 
+
+
+#################################################################################
+#################################################################################
+
 X_train = np.zeros([len(X_train_n)*np.square(s_patch),n_cat])
 y_train = np.zeros([len(y_train_n)*np.square(s_patch)])
 
@@ -108,7 +113,17 @@ y_val = np.zeros([len(y_val_n)*np.square(s_patch)])
 
 step_size = np.square(s_patch)
 
-# TODO check if everything is correctly implemented
+
+
+######################Torben
+# no_label = 99
+# idx = np.where(Y_train!=no_label)
+# x_train = X_train[idx]
+############################
+
+
+
+#°TODO check if everything is correctly implemented
 for i in range(1,len(X_train_n)+1):
     temp = np.load(path+str(files[X_train_n[i-1]])) # last three line contains metadata
     X_train[i*step_size-step_size:i*step_size,:] = temp[:-3,:]
@@ -121,10 +136,9 @@ for i in range(1,len(X_val_n)+1):
     y_val[i*step_size-step_size:i*step_size] = groundtruth_generator(temp[-1,0].astype(np.int64),temp[-3,0].astype(np.int64),temp[-2,0].astype(np.int64),s_patch,s_patch)
     
     
+#################################################################################
+#################################################################################
 
-
-# # Test dataset
-#  ist praktisch 1:1 von only network uebernommen
 
 # In[139]:
 
@@ -180,7 +194,7 @@ for i in range(1,num_files_test+1):
 
 # Decision Tree
 # train classifier and validate the classifier
-dt_clf = tree.DecisionTreeClassifier(max_depth=5)
+dt_clf = tree.DecisionTreeClassifier(max_depth=10)
 dt_clf.fit(X_train, y_train)
 dt_clf.score(X_val, y_val)
 
@@ -213,29 +227,29 @@ print("f1 \n" + str(f1))
 # In[83]:
 
 
-# Import the model we are using
+# # Import the model we are using
 
-# Instantiate model with 1000 decision trees
-rf = RandomForestRegressor(n_estimators = 10, random_state = 0)
-# Train the model on training data
-rf.fit(X_train, y_train.ravel());
-
-
-# In[159]:
+# # Instantiate model with 1000 decision trees
+# rf = RandomForestRegressor(n_estimators = 10, random_state = 0)
+# # Train the model on training data
+# rf.fit(X_train, y_train.ravel());
 
 
-# Use the forest's predict method on the test data
-rf_pred = np.round(rf.predict(X_test))
+# # In[159]:
 
-tn_rf, fp_rf, fn_rf, tp_rf = confusion_matrix(y_test, dt_pred)
-# https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html
-print("background, oil palm, clouds, no label")
-precision_rf = tp/(tp+fp)
-print("precision \n"+str(precision))
-recall_rf = tp/(tp+fn)
-print("recall \n" + str(recall))
-f1_rf = 2*(precision*recall)/(precision+recall)
-print("f1 \n" + str(f1))
+
+# # Use the forest's predict method on the test data
+# rf_pred = np.round(rf.predict(X_test))
+
+# tn_rf, fp_rf, fn_rf, tp_rf = confusion_matrix(y_test, dt_pred)
+# # https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html
+# print("background, oil palm, clouds, no label")
+# precision_rf = tp/(tp+fp)
+# print("precision \n"+str(precision))
+# recall_rf = tp/(tp+fn)
+# print("recall \n" + str(recall))
+# f1_rf = 2*(precision*recall)/(precision+recall)
+# print("f1 \n" + str(f1))
 
 
 # # Visualization
