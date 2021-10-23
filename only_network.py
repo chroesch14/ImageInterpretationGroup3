@@ -55,9 +55,9 @@ sy_image = RGB.shape[2]
 
 
 # number of images in x direction
-nx = 4
+nx = 7
 #number of images in y direction 
-ny = 4
+ny = 7
 
 # size of patch
 s_patch = 256
@@ -146,7 +146,7 @@ for img_n in tqdm(range(n_images)):
 
             
             # save array
-            np.save('./output_test/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
+            np.save('./resnet_8_8_train/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
 
 
 
