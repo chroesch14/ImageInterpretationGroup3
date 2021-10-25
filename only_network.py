@@ -24,7 +24,7 @@ from tqdm import tqdm
 ####################################################################################
 ####################################################################################
 # access the data
-dset = h5py.File("dataset_train.h5","r")
+dset = h5py.File("dataset_test.h5","r")
 
 #Access to the input data
 RGB = dset["RGB"]
@@ -55,9 +55,9 @@ sy_image = RGB.shape[2]
 
 
 # number of images in x direction
-nx = 7
+nx = 31
 #number of images in y direction 
-ny = 7
+ny = 31
 
 # size of patch
 s_patch = 256
@@ -146,7 +146,7 @@ for img_n in tqdm(range(n_images)):
 
             
             # save array
-            np.save('./resnet_8_8_train/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
+            np.save('./resnet_32_32_test/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
 
 
 
