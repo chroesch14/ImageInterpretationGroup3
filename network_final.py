@@ -12,8 +12,10 @@ from torchvision import models
 import torchvision.transforms as T
 from tqdm import tqdm
 #%%
-# access the data
-dset = h5py.File("dataset_train.h5","r")
+# access the data change _train to _test (or vise versa) if the test dataset should be used
+dset = h5py.File("dataset_test.h5","r")
+# path where the output is stored, folder has to be created by hand
+output_path = './test/'
 
 #Access to the input data
 RGB = dset["RGB"]
@@ -38,9 +40,9 @@ sx_image = RGB.shape[1]
 sy_image = RGB.shape[2]
 
 # number of images in x direction
-nx = 7
+nx = 3
 #number of images in y direction 
-ny = 7
+ny = 3
 
 # size of patch
 s_patch = 256
@@ -119,7 +121,7 @@ for img_n in tqdm(range(n_images)):
 
             
             # save array
-            np.save('./resnet_8_8_train_RGB/'+str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
+            np.save(output_path +str(img_n)+'_'+str(xx[i][j])+'_'+str(yy[i][j])+'.npy',temp3)
 
 
 
